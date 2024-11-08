@@ -12,28 +12,28 @@ import java.util.Objects;
 @Getter
 @Setter
 @Embeddable
-public class PracenjeId implements java.io.Serializable {
-    private static final long serialVersionUID = 5752917470953508313L;
+public class FollowerId implements java.io.Serializable {
+    private static final long serialVersionUID = -441638483847793968L;
     @NotNull
-    @Column(name = "pratilac_id", nullable = false)
-    private Integer pratilacId;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
     @NotNull
-    @Column(name = "praceni_id", nullable = false)
-    private Integer praceniId;
+    @Column(name = "follower_id", nullable = false)
+    private Long followerId;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
-        PracenjeId entity = (PracenjeId) o;
-        return Objects.equals(this.praceniId, entity.praceniId) &&
-                Objects.equals(this.pratilacId, entity.pratilacId);
+        FollowerId entity = (FollowerId) o;
+        return Objects.equals(this.followerId, entity.followerId) &&
+                Objects.equals(this.userId, entity.userId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(praceniId, pratilacId);
+        return Objects.hash(followerId, userId);
     }
 
 }
