@@ -8,15 +8,20 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
 public class PostService {
     private final PostRepository postRepository;
+    private final Logger logger = Logger.getLogger(PostService.class.getName());
 
     public List<PostDTO> getAllPosts() {
-        return postRepository.findAll().stream().map(PostDTO::new).collect(Collectors.toList());
+        logger.info("Fetching all posts");
+        List<PostDTO> posts = postRepository.findAll().stream().map(PostDTO::new).collect(Collectors.toList());
+        logger.info("Fetched all posts + " + posts.size());
+        return posts;
     }
 
     public PostDTO getPostById(Long id) {
