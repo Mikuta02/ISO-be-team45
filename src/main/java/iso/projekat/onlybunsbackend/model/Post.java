@@ -35,6 +35,10 @@ public class Post {
     @Column(name = "image_path", nullable = false)
     private String imagePath;
 
+    @NotNull
+    @Column(name = "compressed_image_path")
+    private String compressedImagePath; // Kompresovana slika
+
     @Column(name = "location_latitude")
     private Double locationLatitude;
 
@@ -56,7 +60,6 @@ public class Post {
 
     public Post(PostDTO postDTO) {
         this.description = postDTO.getDescription();
-        this.imagePath = postDTO.getImagePath();
         this.locationLatitude = postDTO.getLocationLatitude();
         this.locationLongitude = postDTO.getLocationLongitude();
         this.likesCount = postDTO.getLikesCount();
