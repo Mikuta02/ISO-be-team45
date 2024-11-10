@@ -1,8 +1,10 @@
 package iso.projekat.onlybunsbackend.service;
 
 import iso.projekat.onlybunsbackend.dto.PostDTO;
+import iso.projekat.onlybunsbackend.dto.UpdatePostDTO;
 import iso.projekat.onlybunsbackend.model.Post;
 import iso.projekat.onlybunsbackend.repository.PostRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -33,5 +35,32 @@ public class PostService {
         Post post = new Post(postDTO);
         postRepository.save(post);
         return new PostDTO(post);
+    }
+
+    public PostDTO updatePost(Long id, UpdatePostDTO updatePostDTO) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Post not found"));
+
+        if (updatePostDTO.getDescription() != null) {
+            post.setDescription(updatePostDTO.getDescription());
+        }
+        if (updatePostDTO.getImagePath() != null) {
+            post.setImagePath(updatePostDTO.getImagePath());
+        }
+        if (updatePostDTO.getLocationLatitude() != null) {
+            post.setLocationLatitude(updatePostDTO.getLocationLatitude());
+        }
+        if (updatePostDTO.getLocationLongitude() != null) {
+            post.setLocationLongitude(updatePostDTO.getLocationLongitude());
+        }
+
+        postRepository.save(post);
+        return new PostDTO(post);
+    }
+
+    public void deletePost(Long id) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Post not found"));
+        postRepository.delete(post);
     }
 }

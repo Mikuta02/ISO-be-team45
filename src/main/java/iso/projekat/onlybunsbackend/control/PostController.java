@@ -1,8 +1,10 @@
 package iso.projekat.onlybunsbackend.control;
 
 import iso.projekat.onlybunsbackend.dto.PostDTO;
+import iso.projekat.onlybunsbackend.dto.UpdatePostDTO;
 import iso.projekat.onlybunsbackend.service.PostService;
 import lombok.AllArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,17 +16,29 @@ public class PostController {
     private final PostService postService;
 
     @GetMapping
-    public List<PostDTO> getAllPosts() {
-        return postService.getAllPosts();
+    public ResponseEntity<List<PostDTO>> getAllPosts() {
+        return ResponseEntity.ok(postService.getAllPosts());
     }
 
     @GetMapping("/{id}")
-    public PostDTO getPostById(@PathVariable Long id) {
-        return postService.getPostById(id);
+    public ResponseEntity<PostDTO> getPostById(@PathVariable Long id) {
+        return ResponseEntity.ok(postService.getPostById(id));
     }
 
     @PostMapping
-    public PostDTO createPost(@RequestBody PostDTO postDTO) {
-        return postService.createPost(postDTO);
+    public ResponseEntity<PostDTO> createPost(@RequestBody PostDTO postDTO) {
+        return ResponseEntity.ok(postService.createPost(postDTO));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<PostDTO> updatePost(@PathVariable Long id, @RequestBody UpdatePostDTO updatePostDTO) {
+        PostDTO updatedPost = postService.updatePost(id, updatePostDTO);
+        return ResponseEntity.ok(updatedPost);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletePost(@PathVariable Long id) {
+        postService.deletePost(id);
+        return ResponseEntity.noContent().build();
     }
 }
