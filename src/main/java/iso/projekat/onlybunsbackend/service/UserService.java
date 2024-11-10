@@ -35,6 +35,8 @@ public class UserService implements UserDetailsService {
 
     public User createUser(UserDTO userDTO) {
         userDTO.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+        userDTO.setEnabled(true);
+        userDTO.setRole("USER");
         User user = new User(userDTO);
         userRepository.save(user);
         return user;
