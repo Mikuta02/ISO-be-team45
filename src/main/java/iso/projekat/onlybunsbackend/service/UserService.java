@@ -2,9 +2,11 @@ package iso.projekat.onlybunsbackend.service;
 
 import iso.projekat.onlybunsbackend.dto.LoginDTO;
 import iso.projekat.onlybunsbackend.dto.UserDTO;
+import iso.projekat.onlybunsbackend.jwt.VerificationToken;
 import iso.projekat.onlybunsbackend.model.User;
 import iso.projekat.onlybunsbackend.repository.PostRepository;
 import iso.projekat.onlybunsbackend.repository.UserRepository;
+import iso.projekat.onlybunsbackend.repository.VerificationTokenRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -14,9 +16,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,6 +29,8 @@ public class UserService implements UserDetailsService {
     private UserRepository userRepository;
     private PasswordEncoder passwordEncoder;
     private PostRepository postRepository;
+    private VerificationTokenRepository verificationTokenRepository;
+    private EmailService emailService;
 
 
     public List<UserDTO> getAllUsers() {
@@ -42,6 +48,19 @@ public class UserService implements UserDetailsService {
         userDTO.setRole("USER");
         User user = new User(userDTO);
         userRepository.save(user);
+
+        // Generišemo verifikacioni token
+        String token = UUID.randomUUID().toString();
+        VerificationToken verificationToken = new VerificationToken();
+        verificationToken.setToken(token);
+        verificationToken.setUser(user);
+        verificationToken.setExpiryDate(LocalDateTime.now().plusHours(24));
+        verificationTokenRepository.save(verificationToken);
+
+        String link = "http://localhost:8080/api/users/verify?token=" + token;
+        emailService.sendEmail(user.getEmail(), "Verify your account", "Please click the following link to verify your account: " + link);
+
+
         return user;
     }
 
@@ -91,4 +110,18 @@ public class UserService implements UserDetailsService {
         }
     }
 
+    public boolean verifyUser(String token) {
+        VerificationToken verificationToken = verificationTokenRepository.findByToken(token)
+                .orElseThrow(() -> new RuntimeException("Invalid verification token"));
+
+        if (verificationToken.getExpiryDate().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Token has expired");
+        }
+
+        User user = verificationToken.getUser();
+        user.setEnabled(true);
+        userRepository.save(user);
+
+        return true;
+    }
 }

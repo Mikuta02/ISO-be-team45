@@ -101,4 +101,14 @@ public class UserController {
         List<UserDTO> users = userService.getUsersSorted(sortBy);
         return ResponseEntity.ok(users);
     }
+
+    @GetMapping("/verify")
+    public ResponseEntity<String> verifyUser(@RequestParam("token") String token) {
+        try {
+            boolean verified = userService.verifyUser(token);
+            return verified ? ResponseEntity.ok("Account verified successfully!") : ResponseEntity.badRequest().body("Verification failed");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }
