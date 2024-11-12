@@ -27,10 +27,6 @@ public class UserController {
     private final AuthenticationManager authenticationManager;
     private final BloomFilterService bloomFilterService;
 
-    @GetMapping
-    public List<UserDTO> getAllUsers() {
-        return userService.getAllUsers();
-    }
 
     @GetMapping("/{id}")
     public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
@@ -84,5 +80,25 @@ public class UserController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         return ResponseEntity.ok(user);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<UserDTO>> getAllUsers(
+            @RequestParam(required = false) String firstName,
+            @RequestParam(required = false) String lastName,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) Integer minPosts,
+            @RequestParam(required = false) Integer maxPosts) {
+
+        List<UserDTO> users = userService.getUsersFiltered(firstName, lastName, email, minPosts, maxPosts);
+        return ResponseEntity.ok(users);
+    }
+
+    @GetMapping("/sorted")
+    public ResponseEntity<List<UserDTO>> getAllUsersSorted(
+            @RequestParam String sortBy) {
+
+        List<UserDTO> users = userService.getUsersSorted(sortBy);
+        return ResponseEntity.ok(users);
     }
 }
