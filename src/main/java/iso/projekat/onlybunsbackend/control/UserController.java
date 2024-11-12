@@ -5,12 +5,13 @@ import iso.projekat.onlybunsbackend.dto.LoginResponse;
 import iso.projekat.onlybunsbackend.dto.UserDTO;
 import iso.projekat.onlybunsbackend.jwt.JWTService;
 import iso.projekat.onlybunsbackend.model.User;
+import iso.projekat.onlybunsbackend.service.BloomFilterService;
 import iso.projekat.onlybunsbackend.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class UserController {
     private final UserService userService;
     private final JWTService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final BloomFilterService bloomFilterService;
 
     @GetMapping
     public List<UserDTO> getAllUsers() {
@@ -44,7 +46,7 @@ public class UserController {
                 () -> new RuntimeException("User not found")
         );
 
-        String jwtToken = jwtService.generateToken(user);
+        String jwtToken = jwtService.generateToken(user, user.getId(), user.getRole());
 
         LoginResponse loginResponse = new LoginResponse();
         loginResponse.setToken(jwtToken);
@@ -57,12 +59,30 @@ public class UserController {
     public ResponseEntity<LoginResponse> createUser(@RequestBody UserDTO userDTO) {
         User user = userService.createUser(userDTO);
 
-        String jwtToken = jwtService.generateToken(user);
+        String jwtToken = jwtService.generateToken(user, user.getId(), user.getRole());
 
         LoginResponse loginResponse = new LoginResponse();
         loginResponse.setToken(jwtToken);
         loginResponse.setExpiresIn(jwtService.getExpirationTime());
 
         return ResponseEntity.ok(loginResponse);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getUserProfile(HttpServletRequest request) {
+        String userIp = request.getRemoteAddr();
+
+        // Proveravamo da li je IP dozvoljena
+        if (!bloomFilterService.isIpAllowed(userIp)) {
+            logger.warning("Unauthorized IP access attempt from: " + userIp);
+            return ResponseEntity.status(403).body("Access from this IP is not allowed");
+        }
+
+        // Preuzimamo autentifikovanog korisnika
+        String username = jwtService.extractUsername(request.getHeader("Authorization").split(" ")[1]);
+        UserDTO user = userService.getUserByUsername(username).map(UserDTO::new)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return ResponseEntity.ok(user);
     }
 }

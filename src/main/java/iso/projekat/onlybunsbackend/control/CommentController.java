@@ -3,6 +3,8 @@ package iso.projekat.onlybunsbackend.control;
 import iso.projekat.onlybunsbackend.dto.CommentDTO;
 import iso.projekat.onlybunsbackend.service.CommentService;
 import lombok.AllArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,7 +22,12 @@ public class CommentController {
     }
 
     @PostMapping
-    public CommentDTO createComment(@RequestBody CommentDTO commentDTO) {
-        return commentService.createComment(commentDTO);
+    public ResponseEntity<?> createComment(@RequestBody CommentDTO commentDTO, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(403).body("You must be logged in to comment");
+        }
+
+        CommentDTO savedComment = commentService.createComment(commentDTO);
+        return ResponseEntity.ok(savedComment);
     }
 }

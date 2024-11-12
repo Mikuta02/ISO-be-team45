@@ -63,4 +63,10 @@ public class PostService {
                 .orElseThrow(() -> new EntityNotFoundException("Post not found"));
         postRepository.delete(post);
     }
+
+    public void likePost(Long postId) {
+        Post post = postRepository.findById(postId).orElseThrow(() -> new RuntimeException("Post not found"));
+        post.setLikesCount(post.getLikesCount() + 1);
+        postRepository.save(post);
+    }
 }

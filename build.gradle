@@ -36,6 +36,8 @@ dependencies {
 
 	implementation 'net.coobird:thumbnailator:0.4.14' // za kompresiju slike
 
+	implementation 'com.google.guava:guava:32.1.1-jre' // za Google Guava
+
 	implementation 'io.springfox:springfox-boot-starter:3.0.0'
 	implementation 'io.springfox:springfox-swagger-ui:3.0.0'
 

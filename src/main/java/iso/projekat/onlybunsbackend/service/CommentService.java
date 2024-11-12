@@ -24,6 +24,7 @@ public class CommentService {
 
     public CommentDTO createComment(CommentDTO commentDTO) {
         Comment comment = new Comment(commentDTO);
+        comment.setId(0L);
         commentRepository.save(comment);
         return new CommentDTO(comment);
     }

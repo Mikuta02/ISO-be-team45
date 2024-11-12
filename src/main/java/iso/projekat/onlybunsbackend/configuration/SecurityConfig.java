@@ -35,6 +35,8 @@ public class SecurityConfig {
                         .requestMatchers(new AntPathRequestMatcher("/v2/**")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/swagger-ui/**")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/api/users  ")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/posts/get")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/comments/post/**")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/api/users/**")).permitAll()
                         .anyRequest().authenticated()
                 )
