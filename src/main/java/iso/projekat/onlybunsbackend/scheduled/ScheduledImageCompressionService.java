@@ -24,9 +24,16 @@ public class ScheduledImageCompressionService {
         for (Post post : posts) {
             try {
                 File originalImage = new File(post.getImagePath());
-                File compressedImage = new File(post.getCompressedImagePath());
+                File compressedImage = new File(post.getCompressedImagePath() != null ?
+                        post.getCompressedImagePath()
+                        :
+                        "uploaded_images/compressed_" + post.getImagePath().substring(post.getImagePath().lastIndexOf("/") + 1)
+                );
                 if (!compressedImage.exists()) {
                     imageCompressionService.compressImage(originalImage, compressedImage);
+                    post.setCompressedImagePath(compressedImage.getPath());
+                    post.setImagePath(compressedImage.getPath());
+                    postRepository.save(post);
                     System.out.println("Slika " + originalImage.getName() + " kompresovana.");
                 }
             } catch (IOException e) {

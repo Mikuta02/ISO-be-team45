@@ -23,6 +23,8 @@ import java.time.Instant;
 public class Post {
     @Id
     @ColumnDefault("nextval('posts_id_seq')")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "posts_id_seq")
+    @SequenceGenerator(name = "posts_id_seq", sequenceName = "posts_id_seq", allocationSize = 1)
     @Column(name = "id", nullable = false)
     private Long id;
 
@@ -35,7 +37,6 @@ public class Post {
     @Column(name = "image_path", nullable = false)
     private String imagePath;
 
-    @NotNull
     @Column(name = "compressed_image_path")
     private String compressedImagePath; // Kompresovana slika
 

@@ -12,7 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class PostDTO {
     private Long id;
     private String description;
-    private MultipartFile image; // Slika koja se šalje sa fronta kao MultipartFile
+    private String image; // Slika koja se šalje sa fronta kao MultipartFile
     private Double locationLatitude;
     private Double locationLongitude;
     private Long userId;
@@ -25,5 +25,6 @@ public class PostDTO {
         this.locationLongitude = post.getLocationLongitude();
         this.userId = post.getUser().getId();
         this.likesCount = post.getLikesCount();
+        this.image = "http://localhost:8080/" + post.getImagePath();
     }
 }

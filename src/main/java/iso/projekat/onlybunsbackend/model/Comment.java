@@ -22,6 +22,8 @@ import java.time.Instant;
 public class Comment {
     @Id
     @ColumnDefault("nextval('comments_id_seq')")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "comments_seq")
+    @SequenceGenerator(name = "comments_seq", sequenceName = "comments_id_seq", allocationSize = 1)
     @Column(name = "id", nullable = false)
     private Long id;
 

@@ -19,6 +19,8 @@ import java.time.Instant;
 public class Notification {
     @Id
     @ColumnDefault("nextval('notifications_id_seq')")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "notifications_id_seq")
+    @SequenceGenerator(name = "notifications_id_seq", sequenceName = "notifications_id_seq", allocationSize = 1)
     @Column(name = "id", nullable = false)
     private Long id;
 

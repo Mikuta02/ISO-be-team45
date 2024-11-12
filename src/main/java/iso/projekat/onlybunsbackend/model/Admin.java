@@ -19,6 +19,8 @@ import java.time.Instant;
 public class Admin {
     @Id
     @ColumnDefault("nextval('admins_id_seq')")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "admins_id_seq")
+    @SequenceGenerator(name = "admins_id_seq", sequenceName = "admins_id_seq", allocationSize = 1)
     @Column(name = "id", nullable = false)
     private Long id;
 

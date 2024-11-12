@@ -18,6 +18,8 @@ import org.hibernate.annotations.OnDeleteAction;
 public class Authority {
     @Id
     @ColumnDefault("nextval('authorities_id_seq')")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "authorities_id_seq")
+    @SequenceGenerator(name = "authorities_id_seq", sequenceName = "authorities_id_seq", allocationSize = 1)
     @Column(name = "id", nullable = false)
     private Long id;
 
