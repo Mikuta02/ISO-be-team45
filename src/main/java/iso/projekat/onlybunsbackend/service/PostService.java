@@ -2,7 +2,10 @@ package iso.projekat.onlybunsbackend.service;
 
 import iso.projekat.onlybunsbackend.dto.PostDTO;
 import iso.projekat.onlybunsbackend.dto.UpdatePostDTO;
+import iso.projekat.onlybunsbackend.model.Like;
 import iso.projekat.onlybunsbackend.model.Post;
+import iso.projekat.onlybunsbackend.model.User;
+import iso.projekat.onlybunsbackend.repository.LikeRepository;
 import iso.projekat.onlybunsbackend.repository.PostRepository;
 import iso.projekat.onlybunsbackend.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -13,7 +16,10 @@ import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,6 +32,7 @@ import java.util.stream.Collectors;
 public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final LikeRepository likeRepository;
     private final Logger logger = Logger.getLogger(PostService.class.getName());
 
     public List<PostDTO> getAllPosts() {
@@ -59,25 +66,49 @@ public class PostService {
         return postRepository.save(post);
     }
 
-    public PostDTO updatePost(Long id, UpdatePostDTO updatePostDTO) {
-        Post post = postRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Post not found"));
+    public Post updatePost(Long postId, String description, Double latitude, Double longitude,
+                           MultipartFile image, String username) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
 
-        if (updatePostDTO.getDescription() != null) {
-            post.setDescription(updatePostDTO.getDescription());
-        }
-        if (updatePostDTO.getImagePath() != null) {
-            post.setImagePath(updatePostDTO.getImagePath());
-        }
-        if (updatePostDTO.getLocationLatitude() != null) {
-            post.setLocationLatitude(updatePostDTO.getLocationLatitude());
-        }
-        if (updatePostDTO.getLocationLongitude() != null) {
-            post.setLocationLongitude(updatePostDTO.getLocationLongitude());
+        if (!post.getUser().getUsername().equals(username)) {
+            throw new RuntimeException("You do not have permission to edit this post");
         }
 
-        postRepository.save(post);
-        return new PostDTO(post);
+        // Ažuriranje detalja posta
+        post.setDescription(description);
+        post.setLocationLatitude(latitude);
+        post.setLocationLongitude(longitude);
+
+        // Ako je nova slika izabrana, sačuvamo je
+        if (image != null && !image.isEmpty()) {
+            try {
+                String newImagePath = saveImage(image);
+                post.setImagePath(newImagePath);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to store image", e);
+            }
+        }
+
+        return postRepository.save(post);
+    }
+
+    private String saveImage(MultipartFile image) throws IOException {
+        String uploadDir = System.getProperty("user.dir") + "/uploaded_images/";
+        File uploadFolder = new File(uploadDir);
+
+        if (!uploadFolder.exists()) {
+            boolean mkdirs = uploadFolder.mkdirs();
+            if (!mkdirs) {
+                throw new RuntimeException("Failed to create directory for storing images");
+            }
+        }
+
+        String fileName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
+        File file = new File(uploadDir + fileName);
+        image.transferTo(file);
+
+        return "uploaded_images/" + fileName;
     }
 
     public void deletePost(Long id) {
@@ -86,8 +117,24 @@ public class PostService {
         postRepository.delete(post);
     }
 
-    public void likePost(Long postId) {
-        Post post = postRepository.findById(postId).orElseThrow(() -> new RuntimeException("Post not found"));
+    public void likePost(Long postId, String username) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Optional<Like> existingLike = likeRepository.findByUserAndPost(user, post);
+        if (existingLike.isPresent()) {
+            throw new RuntimeException("You have already liked this post");
+        }
+
+        Like like = new Like();
+        like.setPost(post);
+        like.setUser(user);
+        likeRepository.save(like);
+
+        // Inkrementiramo broj lajkova
         post.setLikesCount(post.getLikesCount() + 1);
         postRepository.save(post);
     }

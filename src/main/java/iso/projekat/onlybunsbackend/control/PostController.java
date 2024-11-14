@@ -40,12 +40,24 @@ public class PostController {
         return ResponseEntity.ok(postService.createPost(postDTO));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<PostDTO> updatePost(@PathVariable Long id, @RequestBody UpdatePostDTO updatePostDTO) {
-        PostDTO updatedPost = postService.updatePost(id, updatePostDTO);
-        return ResponseEntity.ok(updatedPost);
-    }
+    @PutMapping(value = "/{id}", consumes = "multipart/form-data")
+    public ResponseEntity<PostDTO> updatePost(
+            @PathVariable Long id,
+            @RequestParam("description") String description,
+            @RequestParam("latitude") Double latitude,
+            @RequestParam("longitude") Double longitude,
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            Authentication authentication) {
 
+        // Proveravamo da li je korisnik autentifikovan
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(403).body(null);
+        }
+
+        // Kreiranje UpdatePostDTO i pozivanje PostService za ažuriranje posta
+        Post updatedPost = postService.updatePost(id, description, latitude, longitude, image, authentication.getName());
+        return ResponseEntity.ok(new PostDTO(updatedPost));
+    }
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePost(@PathVariable Long id) {
         postService.deletePost(id);
@@ -58,7 +70,7 @@ public class PostController {
             return ResponseEntity.status(403).body("You must be logged in to like posts");
         }
 
-        postService.likePost(id);
+        postService.likePost(id, authentication.getName());
         return ResponseEntity.ok("Post liked successfully");
     }
 
