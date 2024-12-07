@@ -10,6 +10,7 @@ import iso.projekat.onlybunsbackend.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
@@ -110,5 +111,10 @@ public class UserController {
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @Scheduled(cron = "0 0 0 L * ?") // Svakog poslednjeg dana u mesecu
+    public void deleteInactiveAccounts() {
+        userService.deleteInactiveAccounts();
     }
 }

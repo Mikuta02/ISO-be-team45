@@ -124,4 +124,12 @@ public class UserService implements UserDetailsService {
 
         return true;
     }
+
+    public void deleteInactiveAccounts() {
+        Optional<List<User>> inactiveUsers = userRepository.findInactiveAccounts();
+        if (inactiveUsers.isEmpty()) {
+            return;
+        }
+        userRepository.deleteAll(inactiveUsers.get());
+    }
 }
