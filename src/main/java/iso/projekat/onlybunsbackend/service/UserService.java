@@ -8,6 +8,8 @@ import iso.projekat.onlybunsbackend.repository.PostRepository;
 import iso.projekat.onlybunsbackend.repository.UserRepository;
 import iso.projekat.onlybunsbackend.repository.VerificationTokenRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,7 +18,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +30,8 @@ import java.util.stream.Collectors;
 @Service
 @AllArgsConstructor
 public class UserService implements UserDetailsService {
+    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(UserService.class.getName());
+
     private UserRepository userRepository;
     private PasswordEncoder passwordEncoder;
     private PostRepository postRepository;
@@ -126,10 +132,17 @@ public class UserService implements UserDetailsService {
     }
 
     public void deleteInactiveAccounts() {
-        Optional<List<User>> inactiveUsers = userRepository.findInactiveAccounts();
+        logger.info("Deleting inactive accounts");
+        Instant thresholdDate = Instant.now().minus(30, ChronoUnit.DAYS);
+        Optional<List<User>> inactiveUsers = userRepository.findInactiveAccounts(thresholdDate);
         if (inactiveUsers.isEmpty()) {
             return;
         }
         userRepository.deleteAll(inactiveUsers.get());
+        logger.info("Deleted " + inactiveUsers.get().size() + " inactive accounts");
+    }
+
+    public Page<User> getUsers(PageRequest pageRequest) {
+        return userRepository.findAll(pageRequest);
     }
 }

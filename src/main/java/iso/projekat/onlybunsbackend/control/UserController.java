@@ -9,6 +9,9 @@ import iso.projekat.onlybunsbackend.service.BloomFilterService;
 import iso.projekat.onlybunsbackend.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,6 +19,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 @RestController
@@ -113,6 +117,21 @@ public class UserController {
         }
     }
 
+    @GetMapping("/users")
+    public Page<User> getUsers(
+            @RequestParam Optional<Integer> page,
+            @RequestParam Optional<Integer> size,
+            @RequestParam Optional<String> sortBy
+    ) {
+        Sort.sort(User.class);
+        return userService.getUsers(PageRequest.of(
+                page.orElse(0),
+                size.orElse(5),
+                Sort.by(Sort.Order.asc(sortBy.orElse("id"))).ascending()
+        ));
+    }
+
+    @GetMapping("test/inactive")
     @Scheduled(cron = "0 0 0 L * ?") // Svakog poslednjeg dana u mesecu
     public void deleteInactiveAccounts() {
         userService.deleteInactiveAccounts();
