@@ -1,6 +1,7 @@
 package iso.projekat.onlybunsbackend.repository;
 
 import iso.projekat.onlybunsbackend.model.Post;
+import iso.projekat.onlybunsbackend.model.User;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Point;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,5 +28,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             @Param("longitude") double longitude,
             @Param("radius") double radius
     );
+
+    List<Post> findAllByUser(User user);
 }
 

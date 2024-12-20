@@ -1,9 +1,10 @@
 package iso.projekat.onlybunsbackend.service;
 
 
-import iso.projekat.onlybunsbackend.dto.UserDTO;
+import iso.projekat.onlybunsbackend.dto.*;
 import iso.projekat.onlybunsbackend.jwt.VerificationToken;
 import iso.projekat.onlybunsbackend.model.User;
+import iso.projekat.onlybunsbackend.repository.FollowRepository;
 import iso.projekat.onlybunsbackend.repository.PostRepository;
 import iso.projekat.onlybunsbackend.repository.UserRepository;
 import iso.projekat.onlybunsbackend.repository.VerificationTokenRepository;
@@ -35,6 +36,7 @@ public class UserService implements UserDetailsService {
     private PostRepository postRepository;
     private VerificationTokenRepository verificationTokenRepository;
     private EmailService emailService;
+    private FollowRepository followerRepository;
 
 
     public List<UserDTO> getAllUsers() {
@@ -146,5 +148,48 @@ public class UserService implements UserDetailsService {
 
     public Page<User> getUsers(PageRequest pageRequest) {
         return userRepository.findAll(pageRequest);
+    }
+
+    public List<User> getFollowers(Long userId) {
+        return followerRepository.findFollowersByUserId(userId);
+    }
+
+    public List<User> getFollowing(Long userId) {
+        return followerRepository.findFollowingByFollowerId(userId);
+    }
+
+    public UserProfile getProfile(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        List<User> followers = followerRepository.findFollowersByUserId(userId);
+        List<User> following = followerRepository.findFollowingByFollowerId(userId);
+        UserProfile profile = new UserProfile();
+        profile.setName(user.getFirstName() + " " + user.getLastName());
+        profile.setEmail(user.getEmail());
+        profile.setPosts(postRepository.findAllByUser(user).stream().map(PostDTO::new).collect(Collectors.toList()));
+        profile.setFollowersCount(followers.size());
+        profile.setFollowers(followers.stream().map(UserDTO::new).collect(Collectors.toList()));
+        profile.setFollowing(following.stream().map(UserDTO::new).collect(Collectors.toList()));
+        return profile;
+    }
+
+    public String updateProfile(Long userId, UpdateProfileRequest updateRequest) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        user.setUsername(updateRequest.getName());
+        user.setEmail(updateRequest.getEmail());
+        userRepository.save(user);
+        return "Profile updated successfully!";
+    }
+
+    public String changePassword(Long userId, PasswordChangeRequest request) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            return "Current password is incorrect!";
+        }
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            return "New passwords do not match!";
+        }
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+        return "Password changed successfully!";
     }
 }

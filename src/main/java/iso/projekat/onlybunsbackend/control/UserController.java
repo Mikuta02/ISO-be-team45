@@ -2,9 +2,7 @@ package iso.projekat.onlybunsbackend.control;
 
 import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnels;
-import iso.projekat.onlybunsbackend.dto.LoginDTO;
-import iso.projekat.onlybunsbackend.dto.LoginResponse;
-import iso.projekat.onlybunsbackend.dto.UserDTO;
+import iso.projekat.onlybunsbackend.dto.*;
 import iso.projekat.onlybunsbackend.jwt.JWTService;
 import iso.projekat.onlybunsbackend.model.User;
 import iso.projekat.onlybunsbackend.service.BloomFilterService;
@@ -150,6 +148,36 @@ public class UserController {
                 size.orElse(5),
                 Sort.by(Sort.Order.asc(sortBy.orElse("id"))).ascending()
         ));
+    }
+
+    @GetMapping("/{userId}/followers")
+    public ResponseEntity<List<User>> getFollowers(@PathVariable Long userId) {
+        List<User> followers = userService.getFollowers(userId);
+        return ResponseEntity.ok(followers);
+    }
+
+    @GetMapping("/{userId}/following")
+    public ResponseEntity<List<User>> getFollowing(@PathVariable Long userId) {
+        List<User> following = userService.getFollowing(userId);
+        return ResponseEntity.ok(following);
+    }
+
+    @GetMapping("/{userId}/profile")
+    public ResponseEntity<UserProfile> getProfile(@PathVariable Long userId) {
+        UserProfile profile = userService.getProfile(userId);
+        return ResponseEntity.ok(profile);
+    }
+
+    @PutMapping("/{userId}/profile")
+    public ResponseEntity<String> updateProfile(@PathVariable Long userId, @RequestBody UpdateProfileRequest updateRequest) {
+        String response = userService.updateProfile(userId, updateRequest);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{userId}/change-password")
+    public ResponseEntity<String> changePassword(@PathVariable Long userId, @RequestBody PasswordChangeRequest passwordChangeRequest) {
+        String response = userService.changePassword(userId, passwordChangeRequest);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("test/inactive")
