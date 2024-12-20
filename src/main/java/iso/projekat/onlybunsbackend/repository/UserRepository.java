@@ -14,4 +14,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u WHERE u.enabled = false AND u.createdAt < :thresholdDate")
     Optional<List<User>> findInactiveAccounts(@Param("thresholdDate") Instant thresholdDate);
+
+    @Query("SELECT u FROM User u WHERE u.id IN ( SELECT p.user.id FROM Post p WHERE p.createdAt > :startDate GROUP BY p.user.id ORDER BY SUM(p.likesCount) DESC)")
+    List<User> findTop10UsersByLikesLastWeek(@Param("startDate") Instant startDate);
 }

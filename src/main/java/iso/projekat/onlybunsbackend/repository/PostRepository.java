@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -30,5 +31,13 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     );
 
     List<Post> findAllByUser(User user);
+
+    @Query("SELECT COUNT(p) FROM Post p WHERE p.createdAt > :startDate")
+    long countPostsInLastDays(@Param("startDate") Instant startDate);
+
+    @Query("SELECT p FROM Post p WHERE p.createdAt > :startDate ORDER BY p.likesCount DESC")
+    List<Post> findTop5ByLikesInLastDays(@Param("startDate") Instant startDate);
+
+    List<Post> findTop10ByOrderByLikesCountDesc();
 }
 
