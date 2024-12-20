@@ -1,11 +1,14 @@
 package iso.projekat.onlybunsbackend.control;
 
+import com.google.common.hash.BloomFilter;
+import com.google.common.hash.Funnels;
 import iso.projekat.onlybunsbackend.dto.LoginDTO;
 import iso.projekat.onlybunsbackend.dto.LoginResponse;
 import iso.projekat.onlybunsbackend.dto.UserDTO;
 import iso.projekat.onlybunsbackend.jwt.JWTService;
 import iso.projekat.onlybunsbackend.model.User;
 import iso.projekat.onlybunsbackend.service.BloomFilterService;
+import iso.projekat.onlybunsbackend.service.RateLimiterService;
 import iso.projekat.onlybunsbackend.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
@@ -18,6 +21,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -31,7 +35,8 @@ public class UserController {
     private final JWTService jwtService;
     private final AuthenticationManager authenticationManager;
     private final BloomFilterService bloomFilterService;
-
+    private final BloomFilter<String> bloomFilter = BloomFilter.create(Funnels.stringFunnel(StandardCharsets.UTF_8), 10000);
+    private final RateLimiterService rateLimiterService;
 
     @GetMapping("/{id}")
     public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
@@ -39,7 +44,10 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginDTO loginDto) {
+    public ResponseEntity<?> login(@RequestBody LoginDTO loginDto, @RequestHeader("X-FORWARDED-FOR") String ipAddress) {
+        if (!rateLimiterService.isAllowed(ipAddress)) {
+            return ResponseEntity.status(429).body("Too many login attempts. Try again later.");
+        }
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginDto.getUsername(), loginDto.getPassword())
         );
@@ -48,7 +56,9 @@ public class UserController {
         );
 
         String jwtToken = jwtService.generateToken(user, user.getId(), user.getRole());
-
+        if (jwtToken == null) {
+            return ResponseEntity.status(401).body("Invalid credentials or account not activated.");
+        }
         LoginResponse loginResponse = new LoginResponse();
         loginResponse.setToken(jwtToken);
         loginResponse.setExpiresIn(jwtService.getExpirationTime());
@@ -57,7 +67,18 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<LoginResponse> createUser(@RequestBody UserDTO userDTO) {
+    public ResponseEntity<?> createUser(@RequestBody UserDTO userDTO) {
+        if (bloomFilter.mightContain(userDTO.getUsername())) {
+            throw new RuntimeException("Username already in use");
+        }
+
+        synchronized (this) {
+            if (userService.isUsernameTaken(userDTO.getUsername())) {
+                throw new RuntimeException("Username already in use");
+            }
+            bloomFilter.put(userDTO.getUsername());
+        }
+
         User user = userService.createUser(userDTO);
 
         String jwtToken = jwtService.generateToken(user, user.getId(), user.getRole());

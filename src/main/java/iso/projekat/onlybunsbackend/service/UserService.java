@@ -1,6 +1,6 @@
 package iso.projekat.onlybunsbackend.service;
 
-import iso.projekat.onlybunsbackend.dto.LoginDTO;
+
 import iso.projekat.onlybunsbackend.dto.UserDTO;
 import iso.projekat.onlybunsbackend.jwt.VerificationToken;
 import iso.projekat.onlybunsbackend.model.User;
@@ -10,8 +10,6 @@ import iso.projekat.onlybunsbackend.repository.VerificationTokenRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -68,6 +66,10 @@ public class UserService implements UserDetailsService {
 
 
         return user;
+    }
+
+    public boolean isUsernameTaken(String username) {
+        return userRepository.findByUsername(username).isPresent();
     }
 
     public Optional<User> getUserByUsername(String username) {
