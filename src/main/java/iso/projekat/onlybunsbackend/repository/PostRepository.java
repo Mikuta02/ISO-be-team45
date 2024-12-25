@@ -39,5 +39,12 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     List<Post> findTop5ByLikesInLastDays(@Param("startDate") Instant startDate);
 
     List<Post> findTop10ByOrderByLikesCountDesc();
+
+    @Query("SELECT COUNT(p) FROM Post p WHERE p.user.id = :userId AND p.createdAt > :since")
+    long countPostsByUserSince(@Param("userId") Long userId, @Param("since") Instant since);
+
+    @Query("SELECT SUM(p.likesCount) FROM Post p WHERE p.user.id = :userId AND p.createdAt > :since")
+    long countLikesOnUserPosts(@Param("userId") Long userId, @Param("since") Instant since);
+
 }
 

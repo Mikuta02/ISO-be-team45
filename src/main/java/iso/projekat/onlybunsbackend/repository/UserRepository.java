@@ -17,4 +17,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u WHERE u.id IN ( SELECT p.user.id FROM Post p WHERE p.createdAt > :startDate GROUP BY p.user.id ORDER BY SUM(p.likesCount) DESC)")
     List<User> findTop10UsersByLikesLastWeek(@Param("startDate") Instant startDate);
+
+    @Query("SELECT u FROM User u WHERE u.lastActive < :since")
+    List<User> findInactiveSince(@Param("since") Instant since);
+
+    @Query("SELECT COUNT(f) FROM Follower f WHERE f.user.id = :userId AND f.createdAt > :since")
+    long countNewFollowers(@Param("userId") Long userId, @Param("since") Instant since);
+
 }

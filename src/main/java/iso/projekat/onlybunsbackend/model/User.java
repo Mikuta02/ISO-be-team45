@@ -87,6 +87,9 @@ public class User implements UserDetails {
     @Column(name = "enabled", nullable = false)
     private Boolean enabled = false;
 
+    @Column(name = "lastActive")
+    private Instant lastActive;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Like> likes = new HashSet<>();
 

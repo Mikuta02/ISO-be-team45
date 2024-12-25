@@ -6,6 +6,8 @@ import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import java.time.Instant;
+
 @Getter
 @Setter
 @Entity
@@ -28,4 +30,6 @@ public class Follower {
     @JoinColumn(name = "follower_id", nullable = false)
     private iso.projekat.onlybunsbackend.model.User follower;
 
+    @Column(name = "createdAt")
+    private Instant createdAt;
 }
