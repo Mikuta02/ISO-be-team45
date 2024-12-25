@@ -74,6 +74,16 @@ public class PostController {
         return ResponseEntity.ok("Post liked successfully");
     }
 
+    @PostMapping("/{postId}/unlike")
+    public ResponseEntity<?> unlikePost(@PathVariable Long postId, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(403).body("You must be logged in to like posts");
+        }
+        String username = authentication.getName();
+        postService.unlikePost(postId, username);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/following")
     public ResponseEntity<List<PostDTO>> getFollowingPosts(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {

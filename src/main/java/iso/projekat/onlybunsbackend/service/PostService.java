@@ -16,6 +16,7 @@ import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -117,6 +118,7 @@ public class PostService {
         postRepository.delete(post);
     }
 
+    @Transactional
     public void likePost(Long postId, String username) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
@@ -134,8 +136,25 @@ public class PostService {
         like.setUser(user);
         likeRepository.save(like);
 
-        // Inkrementiramo broj lajkova
+        // Increment the like count
         post.setLikesCount(post.getLikesCount() + 1);
+        postRepository.save(post);
+    }
+
+    @Transactional
+    public void unlikePost(Long postId, String username) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Like existingLike = likeRepository.findByUserAndPost(user, post)
+                .orElseThrow(() -> new RuntimeException("You haven't liked this post yet"));
+
+        likeRepository.delete(existingLike);
+
+        post.setLikesCount(post.getLikesCount() - 1);
         postRepository.save(post);
     }
 
