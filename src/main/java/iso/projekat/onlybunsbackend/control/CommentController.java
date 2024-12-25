@@ -22,12 +22,8 @@ public class CommentController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createComment(@RequestBody CommentDTO commentDTO, Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(403).body("You must be logged in to comment");
-        }
-
-        CommentDTO savedComment = commentService.createComment(commentDTO);
+    public ResponseEntity<CommentDTO> createComment(@RequestBody CommentDTO commentDTO, @RequestParam String username) {
+        CommentDTO savedComment = commentService.createComment(commentDTO, username);
         return ResponseEntity.ok(savedComment);
     }
 }
