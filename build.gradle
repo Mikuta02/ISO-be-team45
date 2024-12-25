@@ -48,6 +48,15 @@ dependencies {
 
 	testCompileOnly 'org.projectlombok:lombok:1.18.34'
 	testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
+
+	// Micrometer core library
+	implementation 'io.micrometer:micrometer-core:1.11.1'
+
+	// Micrometer Prometheus registry
+	implementation 'io.micrometer:micrometer-registry-prometheus:1.11.1'
+
+	// Spring Boot Actuator for exposing metrics
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 }
 
 tasks.named('test') {

@@ -3,6 +3,7 @@ package iso.projekat.onlybunsbackend.control;
 import iso.projekat.onlybunsbackend.dto.PostDTO;
 import iso.projekat.onlybunsbackend.dto.UpdatePostDTO;
 import iso.projekat.onlybunsbackend.model.Post;
+import iso.projekat.onlybunsbackend.service.MonitoringService;
 import iso.projekat.onlybunsbackend.service.PostService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,7 @@ public class PostController {
     private final Logger logger = Logger.getLogger(PostController.class.getName());
 
     private final PostService postService;
+    private MonitoringService monitoringService;
 
     @GetMapping("/get")
     public ResponseEntity<List<PostDTO>> getAllPosts() {
@@ -36,7 +38,8 @@ public class PostController {
     }
 
     @PostMapping
-    public ResponseEntity<PostDTO> createPost(@RequestBody PostDTO postDTO) {
+    public ResponseEntity<PostDTO> createPost(@RequestBody PostDTO postDTO, Authentication authentication) {
+        monitoringService.updateActiveUsers(authentication.getName(), true);
         return ResponseEntity.ok(postService.createPost(postDTO));
     }
 
@@ -121,7 +124,7 @@ public class PostController {
         logger.info("Image: " + image.getOriginalFilename());
         // Save the image to the server
         String imagePath = saveImage(image);
-
+        monitoringService.updateActiveUsers(authentication.getName(), true);
         // Create post with all the provided details
         Post createdPost = postService.createPost(description, imagePath, latitude, longitude, authentication.getName());
 
@@ -161,6 +164,12 @@ public class PostController {
             logger.log(Level.ALL, "Failed to store image", e);
             throw new RuntimeException("Failed to store image", e);
         }
+    }
+
+    @GetMapping("/metrics")
+    public ResponseEntity<?> getMetrics() {
+        // Return Prometheus metrics endpoint or monitoring summary
+        return ResponseEntity.ok("Metrics available on /actuator/prometheus");
     }
 
 }

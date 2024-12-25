@@ -32,9 +32,11 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(req -> req
-                        .requestMatchers(new AntPathRequestMatcher("/v2/**")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/swagger-ui/**")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/api/users  ")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/actuator/prometheus")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/target")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/v2")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/swagger-ui")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/users")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/api/posts/get")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/api/comments/post/**")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/api/users/**")).permitAll()

@@ -1,5 +1,6 @@
 package iso.projekat.onlybunsbackend.service;
 
+import io.micrometer.core.annotation.Timed;
 import iso.projekat.onlybunsbackend.dto.PostDTO;
 import iso.projekat.onlybunsbackend.dto.UpdatePostDTO;
 import iso.projekat.onlybunsbackend.model.Like;
@@ -34,6 +35,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final LikeRepository likeRepository;
+    private MonitoringService monitoringService;
     private final Logger logger = Logger.getLogger(PostService.class.getName());
 
     public List<PostDTO> getAllPosts() {
@@ -48,13 +50,24 @@ public class PostService {
         return post.map(PostDTO::new).orElse(null);
     }
 
+    @Transactional
+    @Timed(value = "http.requests.create_post")
     public PostDTO createPost(PostDTO postDTO) {
-        Post post = new Post(postDTO);
-        postRepository.save(post);
-        return new PostDTO(post);
+        long start = System.currentTimeMillis();
+        try {
+            Post post = new Post(postDTO);
+            postRepository.save(post);
+            return new PostDTO(post);
+        } finally {
+            long duration = System.currentTimeMillis() - start;
+            monitoringService.recordPostCreationTime(duration);
+        }
     }
 
+    @Transactional
+    @Timed(value = "http.requests.create_post")
     public Post createPost(String description, String imagePath, Double latitude, Double longitude, String username) {
+        long start = System.currentTimeMillis();
         Post post = new Post();
         post.setUser(userRepository.findByUsername(username).orElseThrow(() -> new EntityNotFoundException("User not found")));
         post.setDescription(description);
@@ -64,7 +77,13 @@ public class PostService {
         post.setCreatedAt(Instant.now());
         post.setLikesCount(0);
 
-        return postRepository.save(post);
+        try {
+            post = postRepository.save(post);
+            return post;
+        } finally {
+            long duration = System.currentTimeMillis() - start;
+            monitoringService.recordPostCreationTime(duration);
+        }
     }
 
     public Post updatePost(Long postId, String description, Double latitude, Double longitude,
