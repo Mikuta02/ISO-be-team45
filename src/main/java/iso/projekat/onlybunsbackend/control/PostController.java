@@ -1,5 +1,6 @@
 package iso.projekat.onlybunsbackend.control;
 
+import iso.projekat.onlybunsbackend.dto.MapDataDTO;
 import iso.projekat.onlybunsbackend.dto.PostDTO;
 import iso.projekat.onlybunsbackend.dto.UpdatePostDTO;
 import iso.projekat.onlybunsbackend.model.Post;
@@ -110,6 +111,19 @@ public class PostController {
         List<Post> posts = postService.getNearbyPosts(latitude, longitude, radiusKm);
         List<PostDTO> postDTOs = posts.stream().map(PostDTO::new).collect(Collectors.toList());
         return ResponseEntity.ok(postDTOs);
+    }
+
+    @GetMapping("/map")
+    public ResponseEntity<MapDataDTO> getMapData(@RequestParam double latitude,
+                                                 @RequestParam double longitude,
+                                                 Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(403).body(null);
+        }
+
+        String username = authentication.getName();
+        MapDataDTO mapData = postService.getMapDataForUser(username, latitude, longitude);
+        return ResponseEntity.ok(mapData);
     }
 
     @PostMapping("/create")

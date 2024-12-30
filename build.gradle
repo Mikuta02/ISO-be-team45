@@ -57,6 +57,10 @@ dependencies {
 
 	// Spring Boot Actuator for exposing metrics
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+	// rabbitmq
+	implementation 'org.springframework.boot:spring-boot-starter-amqp'
+
 }
 
 tasks.named('test') {

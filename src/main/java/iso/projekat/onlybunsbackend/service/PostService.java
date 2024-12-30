@@ -1,21 +1,21 @@
 package iso.projekat.onlybunsbackend.service;
 
 import io.micrometer.core.annotation.Timed;
+import iso.projekat.onlybunsbackend.dto.LocationDTO;
+import iso.projekat.onlybunsbackend.dto.MapDataDTO;
 import iso.projekat.onlybunsbackend.dto.PostDTO;
-import iso.projekat.onlybunsbackend.dto.UpdatePostDTO;
 import iso.projekat.onlybunsbackend.model.Like;
 import iso.projekat.onlybunsbackend.model.Post;
+import iso.projekat.onlybunsbackend.model.RabbitLocation;
 import iso.projekat.onlybunsbackend.model.User;
 import iso.projekat.onlybunsbackend.repository.LikeRepository;
 import iso.projekat.onlybunsbackend.repository.PostRepository;
+import iso.projekat.onlybunsbackend.repository.RabbitLocationRepository;
 import iso.projekat.onlybunsbackend.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.geo.Distance;
-import org.springframework.data.geo.Metrics;
-import org.springframework.data.geo.Point;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,7 +23,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -36,6 +35,7 @@ public class PostService {
     private final UserRepository userRepository;
     private final LikeRepository likeRepository;
     private MonitoringService monitoringService;
+    private RabbitLocationRepository locationRepository;
     private final Logger logger = Logger.getLogger(PostService.class.getName());
 
     public List<PostDTO> getAllPosts() {
@@ -192,5 +192,19 @@ public class PostService {
 
     public List<Post> getNearbyPosts(double latitude, double longitude, double radiusKm) {
         return postRepository.findPostsByLocation(latitude, longitude, radiusKm);
+    }
+
+    public MapDataDTO getMapDataForUser(String username, double latitude, double longitude) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<Post> nearbyPosts = postRepository.findPostsByLocation(latitude, longitude, 10.0);
+        List<PostDTO> postDTOs = nearbyPosts.stream().map(PostDTO::new).collect(Collectors.toList());
+
+        List<RabbitLocation> locations = locationRepository.findAll();
+        List<LocationDTO> locationDTOs = locations.stream().map(loc -> new LocationDTO(loc.getName(), loc.getLatitude(), loc.getLongitude()))
+                .collect(Collectors.toList());
+
+        return new MapDataDTO(latitude, longitude, postDTOs, locationDTOs);
     }
 }
