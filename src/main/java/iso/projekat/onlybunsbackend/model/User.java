@@ -87,7 +87,7 @@ public class User implements UserDetails {
     @Column(name = "enabled", nullable = false)
     private Boolean enabled = false;
 
-    @Column(name = "lastActive")
+    @Column(name = "last_active")
     private Instant lastActive;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
