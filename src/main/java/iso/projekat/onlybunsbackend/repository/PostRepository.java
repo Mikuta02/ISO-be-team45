@@ -46,5 +46,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("SELECT SUM(p.likesCount) FROM Post p WHERE p.user.id = :userId AND p.createdAt > :since")
     long countLikesOnUserPosts(@Param("userId") Long userId, @Param("since") Instant since);
 
+    @Query("SELECT p FROM Post p WHERE p.user.id = :userId")
+    List<Post> findPostsByUser(@Param("userId") Long userId);
+
 }
 

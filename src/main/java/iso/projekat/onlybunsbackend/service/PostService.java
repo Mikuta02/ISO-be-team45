@@ -207,4 +207,13 @@ public class PostService {
 
         return new MapDataDTO(latitude, longitude, postDTOs, locationDTOs);
     }
+
+    public List<PostDTO> getPostsByUser(Long userId) {
+        return postRepository.findPostsByUser(userId)
+                .stream()
+                .map(PostDTO::new)
+                .collect(Collectors.toList());
+    }
+
+
 }

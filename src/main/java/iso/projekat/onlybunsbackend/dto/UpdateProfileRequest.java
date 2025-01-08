@@ -4,6 +4,9 @@ import lombok.Data;
 
 @Data
 public class UpdateProfileRequest {
-    private String name;
+    private String username;
     private String email;
+    private String firstName;
+    private String lastName;
+    private String address;
 }

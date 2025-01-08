@@ -174,8 +174,9 @@ public class UserService implements UserDetailsService {
 
     public String updateProfile(Long userId, UpdateProfileRequest updateRequest) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
-        user.setUsername(updateRequest.getName());
-        user.setEmail(updateRequest.getEmail());
+        user.setFirstName(updateRequest.getFirstName());
+        user.setAddress(updateRequest.getAddress());
+        user.setLastName(updateRequest.getLastName());
         userRepository.save(user);
         return "Profile updated successfully!";
     }

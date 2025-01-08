@@ -186,4 +186,11 @@ public class PostController {
         return ResponseEntity.ok("Metrics available on /actuator/prometheus");
     }
 
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<PostDTO>> getUserPosts(@PathVariable Long userId) {
+        List<PostDTO> userPosts = postService.getPostsByUser(userId);
+        return ResponseEntity.ok(userPosts);
+    }
+
 }
