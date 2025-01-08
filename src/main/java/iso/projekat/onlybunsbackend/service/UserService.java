@@ -2,7 +2,7 @@ package iso.projekat.onlybunsbackend.service;
 
 
 import iso.projekat.onlybunsbackend.dto.*;
-import iso.projekat.onlybunsbackend.jwt.VerificationToken;
+import iso.projekat.onlybunsbackend.model.VerificationToken;
 import iso.projekat.onlybunsbackend.model.User;
 import iso.projekat.onlybunsbackend.repository.FollowRepository;
 import iso.projekat.onlybunsbackend.repository.PostRepository;

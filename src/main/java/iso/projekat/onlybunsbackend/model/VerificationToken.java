@@ -1,7 +1,6 @@
-package iso.projekat.onlybunsbackend.jwt;
+package iso.projekat.onlybunsbackend.model;
 
 
-import iso.projekat.onlybunsbackend.model.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,6 +10,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Entity
+@Table(name = "verification_token")
 public class VerificationToken {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,5 +22,6 @@ public class VerificationToken {
     @JoinColumn(nullable = false, name = "user_id")
     private User user;
 
+    @Column(name = "expiry_date")
     private LocalDateTime expiryDate;
 }
