@@ -30,6 +30,6 @@ public class Follower {
     @JoinColumn(name = "follower_id", nullable = false)
     private iso.projekat.onlybunsbackend.model.User follower;
 
-    @Column(name = "createdAt")
+    @Column(name = "created_at")
     private Instant createdAt;
 }

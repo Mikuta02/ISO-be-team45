@@ -1,6 +1,7 @@
 package iso.projekat.onlybunsbackend.service;
 
 import iso.projekat.onlybunsbackend.model.Follower;
+import iso.projekat.onlybunsbackend.model.FollowerId;
 import iso.projekat.onlybunsbackend.repository.FollowRepository;
 import iso.projekat.onlybunsbackend.repository.UserRepository;
 import lombok.AllArgsConstructor;
@@ -20,8 +21,13 @@ public class FollowService {
             return "Cannot follow yourself!";
         }
         Follower follow = new Follower();
+        FollowerId  followerId1 = new FollowerId();
+        followerId1.setUserId(followerId);
+        followerId1.setFollowerId(followeeId);
+        follow.setId(followerId1);
         follow.setFollower(userRepository.findById(followerId).get());
         follow.setUser(userRepository.findById(followeeId).get());
+        follow.setCreatedAt(java.time.Instant.now());
         followRepository.save(follow);
         return "Followed successfully!";
     }

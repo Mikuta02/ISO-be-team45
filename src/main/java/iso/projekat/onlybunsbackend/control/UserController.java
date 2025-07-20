@@ -151,16 +151,21 @@ public class UserController {
     }
 
     @GetMapping("/{userId}/followers")
-    public ResponseEntity<List<User>> getFollowers(@PathVariable Long userId) {
-        List<User> followers = userService.getFollowers(userId);
-        return ResponseEntity.ok(followers);
+    public ResponseEntity<List<UserDTO>> getFollowers(@PathVariable Long userId) {
+        List<UserDTO> followersDTO = userService.getFollowers(userId).stream()
+                .map(UserDTO::new) // Konvertuje svaki `User` u `UserDTO`
+                .toList(); // Pretvara stream u listu
+        return ResponseEntity.ok(followersDTO);
     }
 
     @GetMapping("/{userId}/following")
-    public ResponseEntity<List<User>> getFollowing(@PathVariable Long userId) {
-        List<User> following = userService.getFollowing(userId);
-        return ResponseEntity.ok(following);
+    public ResponseEntity<List<UserDTO>> getFollowing(@PathVariable Long userId) {
+        List<UserDTO> followingDTO = userService.getFollowing(userId).stream()
+                .map(UserDTO::new) // Konvertuje svaki `User` u `UserDTO`
+                .toList(); // Pretvara stream u listu
+        return ResponseEntity.ok(followingDTO);
     }
+
 
     @GetMapping("/{userId}/profile")
     public ResponseEntity<UserProfile> getProfile(@PathVariable Long userId) {

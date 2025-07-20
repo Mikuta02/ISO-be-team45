@@ -44,8 +44,10 @@ public class UserService implements UserDetailsService {
     }
 
     public UserDTO getUserById(Long id) {
-        Optional<User> user = userRepository.findById(id);
-        return user.map(UserDTO::new).orElse(null);
+        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        int followersCount = followerRepository.countFollowersByUserId(id);  // broj pratilaca
+        int followingCount = followerRepository.countFollowingByUserId(id); // broj praćenja
+        return new UserDTO(user, followersCount, followingCount);
     }
 
     public User createUser(UserDTO userDTO) {
@@ -193,4 +195,6 @@ public class UserService implements UserDetailsService {
         userRepository.save(user);
         return "Password changed successfully!";
     }
+
+
 }

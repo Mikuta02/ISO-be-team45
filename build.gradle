@@ -61,6 +61,9 @@ dependencies {
 	// rabbitmq
 	implementation 'org.springframework.boot:spring-boot-starter-amqp'
 
+	// websocket
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
 }
 
 tasks.named('test') {
