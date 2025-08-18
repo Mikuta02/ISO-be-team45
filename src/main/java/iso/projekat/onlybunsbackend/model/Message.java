@@ -15,9 +15,13 @@ public class Message {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String sender;   // Korisnik koji šalje poruku
-    private String receiver; // Korisnik kome se šalje poruka
-    private String content;  // Sadržaj poruke
+    private String sender;       // korisničko ime pošiljaoca
+    private String receiver;     // korisničko ime primaoca (za privatni chat)
+    private String content;      // tekst poruke
+    @Column(name = "is_group")
+    @Getter
+    private Boolean group = false; // privatna=false, grupna=true
 
-    private LocalDateTime timestamp = LocalDateTime.now(); // Vreme slanja poruke
+    private LocalDateTime timestamp = LocalDateTime.now();
+
 }

@@ -6,44 +6,39 @@ import lombok.AllArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Controller
-@AllArgsConstructor
 @RestController
 @RequestMapping("/api/chat")
+@AllArgsConstructor
 public class ChatController {
     private final ChatService chatService;
     private final SimpMessagingTemplate messagingTemplate;
 
-    // Privatne poruke
-    @MessageMapping("/private-message/{recipientUsername}")
+    @MessageMapping("/private-message")
     public void sendPrivateMessage(@Payload Message message) {
-        chatService.saveMessage(message); // Sačuvaj poruku u bazi
-        messagingTemplate.convertAndSendToUser(
-                message.getReceiver(),
+        if (message.getGroup() == null) message.setGroup(false);
+        chatService.saveMessage(message);
+
+        // 1) isporuči PRIMAOcu na njegov lični topic
+        messagingTemplate.convertAndSend(
                 "/private-message/" + message.getReceiver(),
+                message
+        );
+
+        // 2) isporuči i POŠILJAOcu (da i on dobije kroz isti tok)
+        messagingTemplate.convertAndSend(
+                "/private-message/" + message.getSender(),
                 message
         );
     }
 
+
+    // REST: istorija između {sender} i {receiver}
     @GetMapping("/{sender}/history/{receiver}")
     public List<Message> getChatHistory(@PathVariable String sender, @PathVariable String receiver) {
-        return chatService.getLast10MessagesForUser(sender);
+        return chatService.getLast10MessagesBetween(sender, receiver);
     }
-
-
-    /*// Grupne poruke
-    @MessageMapping("/group/{groupId}")
-    @SendTo("/topic/group/{groupId}")
-    public Message sendGroupMessage(@Payload Message message) {
-        return chatService.saveGroupMessage(message); // Sačuvaj grupnu poruku i emituj svim pretplatnicima
-    }
-    */
 }

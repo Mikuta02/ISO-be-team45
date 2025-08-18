@@ -32,7 +32,7 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(req -> req
-                        .requestMatchers(new AntPathRequestMatcher("/ws")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/ws/**")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/actuator/prometheus")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/target")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/v2")).permitAll()
