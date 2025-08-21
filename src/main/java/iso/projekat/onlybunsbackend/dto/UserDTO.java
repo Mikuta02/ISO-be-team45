@@ -16,6 +16,7 @@ public class UserDTO {
     private String lastName;
     private String email;
     private String role;
+    private String address = "";
     private boolean enabled;
     private int followersCount; // Dodato polje za broj pratilaca
     private int followingCount; // Dodato polje za broj praćenja
@@ -28,6 +29,7 @@ public class UserDTO {
         this.email = user.getEmail();
         this.role = user.getRole();
         this.enabled = user.getEnabled();
+        this.address = user.getAddress() != null ? user.getAddress() : "";
         this.followersCount = user.getFollowersCount();
         this.followingCount = 0;
     }
@@ -40,6 +42,7 @@ public class UserDTO {
         this.email = user.getEmail();
         this.role = user.getRole();
         this.enabled = user.getEnabled();
+        this.address = user.getAddress() != null ? user.getAddress() : "";
         this.followersCount = followersCount;
         this.followingCount = followingCount;
     }
