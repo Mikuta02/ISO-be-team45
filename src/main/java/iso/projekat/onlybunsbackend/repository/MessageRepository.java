@@ -20,4 +20,7 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
                                    @Param("r2") String r2,
                                    Pageable pageable);
 
+    // Grupni chat: poslednjih 10 poruka za groupId DESC (u servisu okreni u ASC)
+    List<Message> findByGroupTrueAndGroupIdOrderByTimestampDesc(Long groupId, Pageable pageable);
+
 }
