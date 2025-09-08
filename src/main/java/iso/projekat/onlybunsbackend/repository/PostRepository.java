@@ -2,18 +2,15 @@ package iso.projekat.onlybunsbackend.repository;
 
 import iso.projekat.onlybunsbackend.model.Post;
 import iso.projekat.onlybunsbackend.model.User;
-import org.springframework.data.geo.Distance;
-import org.springframework.data.geo.Point;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.List;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
-    List<Post> findByCreatedAtBefore(LocalDate date);
 
     @Query("SELECT p FROM Post p WHERE p.user.id IN (SELECT f.id.followerId FROM Follower f WHERE f.user.username = :username)")
     List<Post> findByUser_Followers_Username(String username);
@@ -32,13 +29,14 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     List<Post> findAllByUser(User user);
 
-    @Query("SELECT COUNT(p) FROM Post p WHERE p.createdAt > :startDate")
-    long countPostsInLastDays(@Param("startDate") Instant startDate);
-
-    @Query("SELECT p FROM Post p WHERE p.createdAt > :startDate ORDER BY p.likesCount DESC")
-    List<Post> findTop5ByLikesInLastDays(@Param("startDate") Instant startDate);
-
+    // All-time top 10
     List<Post> findTop10ByOrderByLikesCountDesc();
+
+    // Broj postova u poslednjih 30 dana (nema @Query, derived metoda)
+    long countByCreatedAtGreaterThanEqual(Instant since);
+
+    // Top za poslednjih 7 dana (uz Pageable)
+    List<Post> findByCreatedAtAfterOrderByLikesCountDesc(Instant since, Pageable pageable);
 
     @Query("SELECT COUNT(p) FROM Post p WHERE p.user.id = :userId AND p.createdAt > :since")
     long countPostsByUserSince(@Param("userId") Long userId, @Param("since") Instant since);

@@ -22,9 +22,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.Principal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -36,6 +38,8 @@ public class PostService {
     private final LikeRepository likeRepository;
     private MonitoringService monitoringService;
     private RabbitLocationRepository locationRepository;
+    private final UploadStorageService uploadStorageService;
+    private final ImageStorageService imageStorageService;
     private final Logger logger = Logger.getLogger(PostService.class.getName());
 
     public List<PostDTO> getAllPosts() {
@@ -63,27 +67,71 @@ public class PostService {
             monitoringService.recordPostCreationTime(duration);
         }
     }
-
     @Transactional
     @Timed(value = "http.requests.create_post")
-    public Post createPost(String description, String imagePath, Double latitude, Double longitude, String username) {
-        long start = System.currentTimeMillis();
+    public PostDTO createPostFromBytes(Principal principal, byte[] bytes, String contentType,
+                                       String description, Double lat, Double lng) throws IOException {
+        User author = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new IllegalStateException("User not found: " + principal.getName()));
+
+        // snimi fajl i dobavi javni URL
+        String imageUrl = imageStorageService.storeImage(bytes, resolveExtension(contentType));
+
         Post post = new Post();
-        post.setUser(userRepository.findByUsername(username).orElseThrow(() -> new EntityNotFoundException("User not found")));
         post.setDescription(description);
-        post.setImagePath(imagePath);
-        post.setLocationLatitude(latitude);
-        post.setLocationLongitude(longitude);
+        post.setImagePath(imageUrl); // pretpostavljam da polje u entitetu zove "image" (URL)
+        post.setLocationLatitude(lat);
+        post.setLocationLongitude(lng);
+        post.setUser(author);
         post.setCreatedAt(Instant.now());
         post.setLikesCount(0);
 
+        Post saved = postRepository.save(post);
+        return new PostDTO(saved);
+    }
+
+    @Transactional
+    @Timed(value = "http.requests.create_post")
+    public PostDTO createPost(Principal principal,
+                              MultipartFile image,
+                              String description,
+                              Double lat,
+                              Double lng) {
+
+        User author = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new IllegalStateException("User not found: " + principal.getName()));
+
+        // snimi fajl i dobavi javni URL
+        String imageUrl = storeImage(image);
+
+        Post post = new Post();
+        post.setDescription(description);
+        post.setImagePath(imageUrl); // pretpostavljam da polje u entitetu zove "image" (URL)
+        post.setLocationLatitude(lat);
+        post.setLocationLongitude(lng);
+        post.setUser(author);
+        post.setCreatedAt(Instant.now());
+        post.setLikesCount(0);
+
+        Post saved = postRepository.save(post);
+        return new PostDTO(saved);
+    }
+
+    private String storeImage(MultipartFile image) {
         try {
-            post = postRepository.save(post);
-            return post;
-        } finally {
-            long duration = System.currentTimeMillis() - start;
-            monitoringService.recordPostCreationTime(duration);
+            String ext = resolveExtension(image.getOriginalFilename());
+            String fileName = System.currentTimeMillis() + "_" + UUID.randomUUID() + (ext != null ? "." + ext : "");
+            return uploadStorageService.saveAndGetLocalUrl(fileName, image.getBytes(), image.getContentType());
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to store image", e);
         }
+    }
+
+    private String resolveExtension(String original) {
+        if (original == null) return null;
+        int dot = original.lastIndexOf('.');
+        if (dot < 0) return null;
+        return original.substring(dot + 1).toLowerCase();
     }
 
     public Post updatePost(Long postId, String description, Double latitude, Double longitude,
