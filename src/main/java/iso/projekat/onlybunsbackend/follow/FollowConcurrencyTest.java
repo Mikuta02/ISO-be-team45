@@ -25,10 +25,9 @@ class FollowConcurrencyTest {
 
     @Test
     void concurrentFollowIncrementsExactlyOncePerRequest() throws Exception {
-        // Pretpostavka: u test DB postoje useri 1,2,3 (inicijalna skripta)
-        Long targetId = 1L;
-        Long f1 = 2L;
-        Long f2 = 3L;
+        Long targetId = 3L;
+        Long f1 = 7L;
+        Long f2 = 8L;
 
         CountDownLatch latch = new CountDownLatch(1);
         Thread t1 = new Thread(() -> {
