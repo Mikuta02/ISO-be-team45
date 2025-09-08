@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class    RabbitLocationDTO {
+public class RabbitLocationDTO {
     private String id;
     private String name;
     private double latitude;
