@@ -1,22 +1,62 @@
 package iso.projekat.onlybunsbackend.control;
 
+import iso.projekat.onlybunsbackend.dto.FollowStatusDto;
+import iso.projekat.onlybunsbackend.security.CurrentUser;
+import iso.projekat.onlybunsbackend.service.FollowRateLimiter;
 import iso.projekat.onlybunsbackend.service.FollowService;
-import lombok.AllArgsConstructor;
+import org.springframework.data.domain.*;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/follow")
-@AllArgsConstructor
+@RequestMapping("/api/follows")
 public class FollowController {
-    private final FollowService followService;
 
-    @PostMapping("/follow/{followerId}/{followeeId}")
-    public String followUser(@PathVariable Long followerId, @PathVariable Long followeeId) {
-        return followService.followUser(followerId, followeeId);
+    private final FollowService service;
+    private final CurrentUser currentUser;
+
+    public FollowController(FollowService service, CurrentUser currentUser) {
+        this.service = service;
+        this.currentUser = currentUser;
     }
 
-    @DeleteMapping("/follow/{followerId}/{followeeId}")
-    public String unfollowUser(@PathVariable Long followerId, @PathVariable Long followeeId) {
-        return followService.unfollowUser(followerId, followeeId);
+    @PostMapping("/{targetId}")
+    public ResponseEntity<FollowStatusDto> follow(@PathVariable Long targetId) {
+        Long me = currentUser.id();
+        return ResponseEntity.ok(service.follow(me, targetId));
+    }
+
+    @DeleteMapping("/{targetId}")
+    public ResponseEntity<FollowStatusDto> unfollow(@PathVariable Long targetId) {
+        Long me = currentUser.id();
+        return ResponseEntity.ok(service.unfollow(me, targetId));
+    }
+
+    @GetMapping("/status/{targetId}")
+    public ResponseEntity<FollowStatusDto> status(@PathVariable Long targetId) {
+        Long me = currentUser.id();
+        return ResponseEntity.ok(service.status(me, targetId));
+    }
+
+    @GetMapping("/{userId}/followers")
+    public ResponseEntity<Page<Long>> followers(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(service.followers(userId, PageRequest.of(page, size)));
+    }
+
+    @GetMapping("/{userId}/following")
+    public ResponseEntity<Page<Long>> following(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(service.following(userId, PageRequest.of(page, size)));
+    }
+
+    @ExceptionHandler(FollowRateLimiter.RateLimitExceeded.class)
+    public ResponseEntity<String> tooManyFollows(FollowRateLimiter.RateLimitExceeded e) {
+        return ResponseEntity.status(429).body(e.getMessage());
     }
 }
+

@@ -68,10 +68,6 @@ public class User implements UserDetails {
     @Column(name = "address", nullable = false)
     private String address;
 
-    @ColumnDefault("0")
-    @Column(name = "followers_count")
-    private Integer followersCount;
-
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
     private Instant createdAt;
@@ -92,6 +88,12 @@ public class User implements UserDetails {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Like> likes = new HashSet<>();
+
+    // @Version  // (opciono; koristimo PESSIMISTIC_WRITE u servisu)
+    private Long version;
+
+    @Column(name = "followers_count", nullable = false)
+    private long followersCount = 0;
 
     public User(UserDTO userDTO) {
         this.username = userDTO.getUsername();

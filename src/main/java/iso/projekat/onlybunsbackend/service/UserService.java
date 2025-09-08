@@ -1,9 +1,8 @@
 package iso.projekat.onlybunsbackend.service;
 
-
 import iso.projekat.onlybunsbackend.dto.*;
-import iso.projekat.onlybunsbackend.model.VerificationToken;
 import iso.projekat.onlybunsbackend.model.User;
+import iso.projekat.onlybunsbackend.model.VerificationToken;
 import iso.projekat.onlybunsbackend.repository.FollowRepository;
 import iso.projekat.onlybunsbackend.repository.PostRepository;
 import iso.projekat.onlybunsbackend.repository.UserRepository;
@@ -11,6 +10,7 @@ import iso.projekat.onlybunsbackend.repository.VerificationTokenRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -20,16 +20,14 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
 public class UserService implements UserDetailsService {
-    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(UserService.class.getName());
+    private static final Logger logger = Logger.getLogger(UserService.class.getName());
 
     private UserRepository userRepository;
     private PasswordEncoder passwordEncoder;
@@ -38,15 +36,20 @@ public class UserService implements UserDetailsService {
     private EmailService emailService;
     private FollowRepository followerRepository;
 
-
     public List<UserDTO> getAllUsers() {
         return userRepository.findAll().stream().map(UserDTO::new).collect(Collectors.toList());
     }
 
     public UserDTO getUserById(Long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
-        int followersCount = followerRepository.countFollowersByUserId(id);  // broj pratilaca
-        int followingCount = followerRepository.countFollowingByUserId(id); // broj praćenja
+
+        // broj pratilaca: koliko njih prati 'id'
+        int followersCount = Math.toIntExact(followerRepository.countByFolloweeId(id));
+
+        // broj praćenja: koliko 'id' prati druge (koristimo totalElements iz Page count query-ja)
+        long followingTotal = followerRepository.findByFollowerId(id, PageRequest.of(0, 1)).getTotalElements();
+        int followingCount = Math.toIntExact(followingTotal);
+
         return new UserDTO(user, followersCount, followingCount);
     }
 
@@ -57,7 +60,6 @@ public class UserService implements UserDetailsService {
         User user = new User(userDTO);
         userRepository.save(user);
 
-        // Generišemo verifikacioni token
         String token = UUID.randomUUID().toString();
         VerificationToken verificationToken = new VerificationToken();
         verificationToken.setToken(token);
@@ -66,8 +68,8 @@ public class UserService implements UserDetailsService {
         verificationTokenRepository.save(verificationToken);
 
         String link = "http://localhost:8080/api/users/verify?token=" + token;
-        emailService.sendEmail(user.getEmail(), "Verify your account", "Please click the following link to verify your account: " + link);
-
+        emailService.sendEmail(user.getEmail(), "Verify your account",
+                "Please click the following link to verify your account: " + link);
 
         return user;
     }
@@ -114,7 +116,8 @@ public class UserService implements UserDetailsService {
 
     private Comparator<User> getComparator(String sortBy) {
         if ("followersCount".equalsIgnoreCase(sortBy)) {
-            return Comparator.comparingInt(User::getFollowersCount);
+            // getFollowersCount vraća long -> koristimo comparingLong
+            return Comparator.comparingLong(User::getFollowersCount);
         } else if ("email".equalsIgnoreCase(sortBy)) {
             return Comparator.comparing(User::getEmail);
         } else {
@@ -152,18 +155,31 @@ public class UserService implements UserDetailsService {
         return userRepository.findAll(pageRequest);
     }
 
+    // =========================
+    // Praćenje (legacy očekivanja)
+    // =========================
+
     public List<User> getFollowers(Long userId) {
-        return followerRepository.findFollowersByUserId(userId);
+        // svi koji prate userId -> Follow.followeeId = userId; uzimamo followerId pa učitamo User-e
+        var follows = followerRepository.findByFolloweeId(userId, Pageable.unpaged()).getContent();
+        List<Long> followerIds = follows.stream().map(f -> f.getFollowerId()).toList();
+        return followerIds.isEmpty() ? List.of() : userRepository.findAllById(followerIds);
     }
 
     public List<User> getFollowing(Long userId) {
-        return followerRepository.findFollowingByFollowerId(userId);
+        // svi koje userId prati -> Follow.followerId = userId; uzimamo followeeId pa učitamo User-e
+        var follows = followerRepository.findByFollowerId(userId, Pageable.unpaged()).getContent();
+        List<Long> followeeIds = follows.stream().map(f -> f.getFolloweeId()).toList();
+        return followeeIds.isEmpty() ? List.of() : userRepository.findAllById(followeeIds);
     }
 
     public UserProfile getProfile(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
-        List<User> followers = followerRepository.findFollowersByUserId(userId);
-        List<User> following = followerRepository.findFollowingByFollowerId(userId);
+
+        // koristimo gore definisane metode da zadržimo jednoobraznu logiku
+        List<User> followers = getFollowers(userId);
+        List<User> following = getFollowing(userId);
+
         UserProfile profile = new UserProfile();
         profile.setName(user.getFirstName() + " " + user.getLastName());
         profile.setEmail(user.getEmail());
@@ -195,6 +211,4 @@ public class UserService implements UserDetailsService {
         userRepository.save(user);
         return "Password changed successfully!";
     }
-
-
 }

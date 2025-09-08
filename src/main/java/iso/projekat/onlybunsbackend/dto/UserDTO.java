@@ -30,7 +30,7 @@ public class UserDTO {
         this.role = user.getRole();
         this.enabled = user.getEnabled();
         this.address = user.getAddress() != null ? user.getAddress() : "";
-        this.followersCount = user.getFollowersCount();
+        this.followersCount = (int) user.getFollowersCount();
         this.followingCount = 0;
     }
 
