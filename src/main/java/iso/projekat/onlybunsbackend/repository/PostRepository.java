@@ -3,6 +3,7 @@ package iso.projekat.onlybunsbackend.repository;
 import iso.projekat.onlybunsbackend.model.Post;
 import iso.projekat.onlybunsbackend.model.User;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -46,6 +47,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     @Query("SELECT p FROM Post p WHERE p.user.id = :userId")
     List<Post> findPostsByUser(@Param("userId") Long userId);
+
+    List<Post> findByUser_IdIn(List<Long> userIds, Sort sort);
 
 }
 

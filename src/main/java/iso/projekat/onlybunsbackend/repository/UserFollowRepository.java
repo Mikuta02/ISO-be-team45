@@ -17,4 +17,5 @@ public interface UserFollowRepository extends JpaRepository<User, Long> {
     // Korisno ako do korisnika dolazimo preko username/email
     Optional<User> findByEmailIgnoreCase(String email);
     Optional<User> findByUsernameIgnoreCase(String username);
+    Optional<User> findByUsernameNotIgnoreCase(String username);
 }

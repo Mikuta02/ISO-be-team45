@@ -15,6 +15,7 @@ import iso.projekat.onlybunsbackend.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +37,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final LikeRepository likeRepository;
+    private final FollowService followService;
     private MonitoringService monitoringService;
     private RabbitLocationRepository locationRepository;
     private final UploadStorageService uploadStorageService;
@@ -230,9 +232,32 @@ public class PostService {
     }
 
     public List<PostDTO> getFollowingPosts(String username) {
-        List<Post> postovi = postRepository.findByUser_Followers_Username(username);
-        return postovi.stream().map(PostDTO::new).collect(Collectors.toList());
+        // nađi korisnika
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found: " + username));
+
+        Long userId = user.getId();
+
+        // ID-evi korisnika koje user prati
+        List<Long> followeeIds = followService.following(userId, Pageable.unpaged())
+                .getContent();
+
+        if (followeeIds.isEmpty()) {
+            return List.of(); // ništa ne prati
+        }
+
+        // uzmi sve postove od tih korisnika, najnoviji prvi
+        List<Post> posts = postRepository.findByUser_IdIn(
+                followeeIds,
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+
+        return posts.stream()
+                .map(PostDTO::new)
+                .collect(Collectors.toList());
     }
+
+
 
     public List<PostDTO> getTrendingPosts() {
         return postRepository.findAll(PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "likesCount"))).stream().map(PostDTO::new).collect(Collectors.toList());

@@ -1,6 +1,7 @@
 package iso.projekat.onlybunsbackend.service;
 
 import iso.projekat.onlybunsbackend.dto.*;
+import iso.projekat.onlybunsbackend.model.Follow;
 import iso.projekat.onlybunsbackend.model.User;
 import iso.projekat.onlybunsbackend.model.VerificationToken;
 import iso.projekat.onlybunsbackend.repository.FollowRepository;
@@ -35,6 +36,7 @@ public class UserService implements UserDetailsService {
     private VerificationTokenRepository verificationTokenRepository;
     private EmailService emailService;
     private FollowRepository followerRepository;
+    private FollowService followService;
 
     public List<UserDTO> getAllUsers() {
         return userRepository.findAll().stream().map(UserDTO::new).collect(Collectors.toList());
@@ -162,14 +164,15 @@ public class UserService implements UserDetailsService {
     public List<User> getFollowers(Long userId) {
         // svi koji prate userId -> Follow.followeeId = userId; uzimamo followerId pa učitamo User-e
         var follows = followerRepository.findByFolloweeId(userId, Pageable.unpaged()).getContent();
-        List<Long> followerIds = follows.stream().map(f -> f.getFollowerId()).toList();
+        List<Long> followerIds = follows.stream().map(Follow::getFollowerId).toList();
         return followerIds.isEmpty() ? List.of() : userRepository.findAllById(followerIds);
     }
 
     public List<User> getFollowing(Long userId) {
         // svi koje userId prati -> Follow.followerId = userId; uzimamo followeeId pa učitamo User-e
         var follows = followerRepository.findByFollowerId(userId, Pageable.unpaged()).getContent();
-        List<Long> followeeIds = follows.stream().map(f -> f.getFolloweeId()).toList();
+        List<Long> followeeIds = follows.stream().map(Follow::getFolloweeId).toList();
+        followeeIds = followService.following(userId, Pageable.unpaged()).getContent();
         return followeeIds.isEmpty() ? List.of() : userRepository.findAllById(followeeIds);
     }
 

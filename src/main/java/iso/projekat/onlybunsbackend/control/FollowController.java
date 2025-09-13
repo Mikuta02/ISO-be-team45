@@ -6,6 +6,7 @@ import iso.projekat.onlybunsbackend.service.FollowRateLimiter;
 import iso.projekat.onlybunsbackend.service.FollowService;
 import org.springframework.data.domain.*;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -33,10 +34,21 @@ public class FollowController {
     }
 
     @GetMapping("/status/{targetId}")
-    public ResponseEntity<FollowStatusDto> status(@PathVariable Long targetId) {
+    public ResponseEntity<FollowStatusDto> status(@PathVariable Long targetId, Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) {
+            // nije ulogovan korisnik
+            return ResponseEntity.status(403).build();
+        }
+
         Long me = currentUser.id();
-        return ResponseEntity.ok(service.status(me, targetId));
+        try {
+            return ResponseEntity.ok(service.status(me, targetId));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).build();
+        }
     }
+
 
     @GetMapping("/{userId}/followers")
     public ResponseEntity<Page<Long>> followers(

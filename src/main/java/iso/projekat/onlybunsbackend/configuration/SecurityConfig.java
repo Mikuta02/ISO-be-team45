@@ -42,8 +42,10 @@ public class SecurityConfig {
                         .requestMatchers(new AntPathRequestMatcher("/swagger-ui")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/api/users")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/api/posts/get")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/posts/trending")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/api/comments/post/**")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/api/users/**")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/posts/nearby")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/api/rabbit-care/**")).permitAll()
                         .requestMatchers(new AntPathRequestMatcher("/uploaded_images/**")).permitAll() // Dopuštamo pristup slikama
                         .anyRequest().authenticated()
